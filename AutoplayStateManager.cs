@@ -3,8 +3,11 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
+// Manages the current autoplay mode (off, normal, fast) and which
+// autoplay state is active (manual, basic auto, or smart auto).
 public class AutoplayStateManager : MonoBehaviour
 {
+  // Current state in the autoplay state machine.
   AutoplayBaseState currentState;
   AutoplayNormalState normalState;
   AutoplayAutoState autoState;
@@ -14,7 +17,6 @@ public class AutoplayStateManager : MonoBehaviour
   [SerializeField] private PlayerManager player;
   [SerializeField] private PlayerActions playerActions;
   private Telemetry telemetry;
-  //[SerializeField] private EnemyManager enemyManager;
 
   [Header("Autoplay Speed")]
   [SerializeField] private float regularSpeed;
@@ -24,6 +26,7 @@ public class AutoplayStateManager : MonoBehaviour
   [SerializeField] private float movementDuration;
   private float roundStartTime;
 
+  // Enum to track what state autoplay is in (off, normal, or fast-forwarding).
   private enum AutoplaySpeed
   {
     Off
@@ -36,15 +39,20 @@ public class AutoplayStateManager : MonoBehaviour
   void Start()
   {
     telemetry = FindAnyObjectByType<Telemetry>();
+    
+    // Initialize concrete autoplay states.
     normalState = new AutoplayNormalState();
     autoState = new AutoplayAutoState();
     smartAutoState = new AutoplaySmartState();
+
+    // Start in normal state.
     currentState = normalState;
     currentState.EnterState(this);
   }
 
   void Update()
   {
+    // Only update AI states and scale time when autoplay is on.
     if (autoplaySpeed != AutoplaySpeed.Off)
     {
       currentState.UpdateState(this);
@@ -52,10 +60,13 @@ public class AutoplayStateManager : MonoBehaviour
     }
     else
     {
+      // When autoplay is off, run at default game speed.
       Time.timeScale = regularSpeed;
     }
   }
 
+  // Switches to new autoplay state (e.g., from basic auto to smart auto),
+  // but only if the player is still active.
   public void SwitchState(AutoplayBaseState newState)
   {
     if (currentState == newState)
@@ -71,6 +82,7 @@ public class AutoplayStateManager : MonoBehaviour
     }
   }
 
+  // Cycles autoplay game speed.
   public void ToggleAutoplay()
   {
     autoplaySpeed = (AutoplaySpeed)(((int)autoplaySpeed + 1) % 3);
@@ -97,6 +109,7 @@ public class AutoplayStateManager : MonoBehaviour
     SwitchState(AutoState);
   }
 
+  // Cycles smart autoplay game speed.
   public void ToggleSmartPlay()
   {
     autoplaySpeed = (AutoplaySpeed)(((int)autoplaySpeed + 1) % 3);
@@ -128,6 +141,7 @@ public class AutoplayStateManager : MonoBehaviour
     roundStartTime = Time.time;
   }
 
+  // Initializes default ability weights the first time Smart AI begins.
   public void WeightsInit()
   {
     Debug.Log("Attempt to initialize weights.");
@@ -142,8 +156,12 @@ public class AutoplayStateManager : MonoBehaviour
     }
   }
 
+  // Uses combat telemetry to nudge Smart AI ability weights over time.
+  // High-DPS abilities that are underused get a weight boost.
+  // Low-DPS abilities that are overused get a weight penalty.
   public void AdjustSmartAIWeights(PlayerActions player)
   {
+    // Only adjust weights if Smart AI is active and if there is a valid player.
     if (telemetry.AIType != "Smart" || player == null)
     {
       return;
@@ -152,34 +170,45 @@ public class AutoplayStateManager : MonoBehaviour
     float winPercent = telemetry.WinPercent;
     float totalAbilities = telemetry.TotalAbilityCount;
 
+    // Adjust abilities independently based on its performance metrics.
     Adjust("melee", player.Ability1Weight, value => player.SetAbilityWeight("melee", value));
     Adjust("ranged", player.Ability2Weight, value => player.SetAbilityWeight("ranged", value));
     Adjust("reload", player.Ability3Weight, value => player.SetAbilityWeight("reload", value));
     Adjust("aoe", player.Ability4Weight, value => player.SetAbilityWeight("aoe", value));
     //Adjust("finisher", player.Ability5Weight, value => player.SetAbilityWeight("finisher", value));
 
+    // Local helper that encapsulates the adjustment logic for a single ability.
     void Adjust(string ability, float currentWeight, Action<float> setter)
     {
       float count = telemetry.GetAbilityCount(ability);
       float damage = telemetry.GetAbilityDamage(ability);
       float percent = telemetry.GetAbilityUsagePercent(ability);
+
+      // Basic damage-per-second metric.
       float dps = (count > 0) ? damage / count : 0;
       float adjustment = 0.0f;
 
+      // If the ability is strong (high DPS) but rarely used,
+      // encourage the AI to pick it more often.
       if (dps > 20.0f && percent < 20.0f)
       {
         adjustment = +15.0f;
       }
+      // If the ability is weak (low DPS) but overused,
+      // decrease the pick chance to make sure the AI explores other options.
       else if (dps < 10.0f && percent > 50.0f)
       {
         adjustment = -15.0f;
       }
 
       float newWeight = Mathf.Round(currentWeight + adjustment);
+      
+      // Keep weights within a reasonable band so they do not explode.
       newWeight = Mathf.Clamp(newWeight, 10.0f, 300.0f);
       setter(newWeight);
     }
-
+    
+    // Normalize total weights, so that the AI's probability distribution stays stable.
     float sum = player.Ability1Weight + player.Ability2Weight + player.Ability3Weight + player.Ability4Weight;
     
     if (sum == 0)
@@ -221,6 +250,7 @@ public class AutoplayStateManager : MonoBehaviour
     //player.ClampAbilityWeights(0.0f, 200.0f);
   }
 
+  // Exposed properties for states to access shared data.
   public AutoplayBaseState CurrentState => currentState;
   public AutoplayNormalState NormalState => normalState;
   public AutoplayAutoState AutoState => autoState;

@@ -1,6 +1,6 @@
-## Combat System Simulation
+# Combat System Simulation
 
-### DESCRIPTION
+## DESCRIPTION
 I built a custom 2.5D side-scrolling combat prototype in Unity featuring my first enemy AI state machine and a Gears of War–style active reload that rewards precise timing. By logging enemy actions and combat events, I used basic telemetry to tweak attack patterns, timings, and difficulty until encounters felt fair and responsive. This project became my sandbox for learning gameplay systems, AI behavior, and data-driven combat balancing.
 
 ## SHOWCASE

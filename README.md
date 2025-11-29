@@ -10,9 +10,9 @@ I built a custom 2.5D side-scrolling combat prototype in Unity featuring my firs
 - Manages game modes, waves, spawning, telemetry, and autoplay integration.
 
 ### Adaptive Smart Autoplay AI (Telemetry-driven player AI)
-#### AutoplayStateManager.cs
+#### [AutoplayStateManager.cs](https://github.com/allensze/Combat-System-Simulation/blob/main/AutoplayStateManager.cs)
 - Shows state pattern and an adaptive Smart AI that reacts to telemetry.
 
 ### Player Ability & Targeting System
-#### PlayerActions.cs
+#### [PlayerActions.cs](https://github.com/allensze/Combat-System-Simulation/blob/main/PlayerActions.cs)
 - Includes input handling, ability system, cooldown timers, smart target selection, and autoplay hooks.

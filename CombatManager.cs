@@ -5,6 +5,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// Orchestrates combat waves, enemy spawning, and game mode flow.
+/// In telemetry mode, it also runs structured experiments comparing Random vs Smart AI
+/// and stream  performance data into a CSV format.
+/// </summary>
 public class CombatManager : MonoBehaviour
 {
   public enum GameMode
@@ -34,6 +39,8 @@ public class CombatManager : MonoBehaviour
   private PlayerManager playerManager;
   private AutoplayStateManager auto;
   private Telemetry telemetry;
+
+  // How many times each wave is repeated in telemetry mode.
   [SerializeField] private int telemetryRuns;
 
   [Header("Player Data")]
@@ -44,13 +51,19 @@ public class CombatManager : MonoBehaviour
   [SerializeField] private float zOffset;
   [SerializeField] private float backRowOffset;
   private int activeEnemies = 0;
+
+  // Live enemy instances that belong to the current wave.
   private List<GameObject> activeWave;
+  
+  // Cached copy of a wave used when repeating it multiple times for telemetry.
   private Wave cachedWave;
 
   [Header("Enemy Waves")]
   [SerializeField] private List<Wave> singleEnemyWaves;
   [SerializeField] private List<Wave> groupEnemyWaves;
   [SerializeField] private List<Wave> mixedEnemyWaves;
+
+  // Queue of prefabs waiting to be spawned for the current wave/round.
   [SerializeField] private Queue<GameObject> enemyQueue = new Queue<GameObject>();
   private GameMode currentMode = GameMode.Normal;
   private int currentWave = 0;
@@ -59,6 +72,7 @@ public class CombatManager : MonoBehaviour
 
   void Awake()
   {
+    // Find shared managers in the scene.
     uiManager = FindAnyObjectByType<UIManager>();
     timeManager = FindAnyObjectByType<TimeManager>();
     playerManager = FindAnyObjectByType<PlayerManager>();
@@ -69,11 +83,14 @@ public class CombatManager : MonoBehaviour
   void Start()
   {
     activeWave = new List<GameObject>();
+
+    // Default mode = Normal mode
     SwitchMode(GameMode.Normal);
   }
 
   void Update()
   {
+    // Keyboard shortcuts to quickly switch modes and toggle autoplay for testing.
     if (Input.GetKeyDown(KeyCode.A))
     {
       auto.ToggleAutoplay();
@@ -101,6 +118,7 @@ public class CombatManager : MonoBehaviour
     
     if (Input.GetKeyDown(KeyCode.R))
     {
+      // Scene restart for rapid iteration.
       SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 

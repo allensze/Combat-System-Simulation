@@ -6,7 +6,7 @@ I built a custom 2.5D side-scrolling combat prototype in Unity featuring my firs
 ## SHOWCASE
 
 ### Combat Wave & Telemetry Orchestrator
-#### CombatManager.cs
+#### [CombatManager.cs](https://github.com/allensze/Combat-System-Simulation/blob/main/CombatManager.cs)
 - Manages game modes, waves, spawning, telemetry, and autoplay integration.
 
 ### Adaptive Smart Autoplay AI (Telemetry-driven player AI)

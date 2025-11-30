@@ -142,14 +142,20 @@ public class CombatManager : MonoBehaviour
       auto.EnableAutoplay();
     }
 
+    // Telemetry: CSV header
     telemetry.DataStream?.WriteLine("AI TYPE, CATEGORY, ENEMIES, RATING, DIFF, WINS, LOSSES, WIN %, ROUND TIME, ENERGY THRUST %, KINETIC SHOT %, ACTIVE RELOAD %, ARC SLASH %");
     StartNextWave();
   }
 
+  /// <summary>
+  /// Builds the enemy queue for the current wave and spawns the first batch.
+  /// Telemetry mode: waves are cached and reused across multiple runs.
+  /// </summary>
   private void StartNextWave()
   {
     List<Wave> waveList = GetWaveList();
-    
+
+    // 
     if (currentWave >= waveList.Count)
     {
       telemetry.RecordSummary();
